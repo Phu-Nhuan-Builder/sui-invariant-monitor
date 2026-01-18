@@ -70,6 +70,7 @@ impl OpenRouterClient {
         Self {
             client: reqwest::Client::builder()
                 .http1_only()  // Force HTTP/1.1 to avoid OpenRouter issues
+                .timeout(std::time::Duration::from_secs(120))  // 2 minute timeout for LLM analysis
                 .build()
                 .unwrap(),
             api_key,
@@ -227,7 +228,10 @@ pub struct OllamaClient {
 impl OllamaClient {
     pub fn new(base_url: Option<String>, model: String) -> Self {
         Self {
-            client: reqwest::Client::new(),
+            client: reqwest::Client::builder()
+                .timeout(std::time::Duration::from_secs(120))  // 2 minute timeout for LLM analysis
+                .build()
+                .unwrap(),
             base_url: base_url.unwrap_or_else(|| "http://localhost:11434".to_string()),
             model,
         }
