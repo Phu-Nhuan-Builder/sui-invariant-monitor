@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: sui-invariant-monitor
+    env: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    region: singapore
+    plan: starter
+    envVars:
+      - key: SUI_RPC_URL
+        value: https://fullnode.mainnet.sui.io:443
+      - key: PORT
+        value: 8080
+      - key: RUST_LOG
+        value: info
+      - key: POLLING_INTERVAL_SECS
+        value: 10
+      - key: DISCORD_WEBHOOK_URL
+        sync: false  # Set manually in dashboard
+    healthCheckPath: /health
