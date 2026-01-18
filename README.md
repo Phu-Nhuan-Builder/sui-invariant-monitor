@@ -404,4 +404,4 @@ MIT License - see LICENSE file for details
 
 © 2026 Phú Nhuận Builder. Built for First Movers Sprint 2026
 
-**Live Demo**: https://sui-invariant-monitor.vercel.app
+**Live Demo**: https://sui-invariant-monitor.phunhuanbuilder.com
