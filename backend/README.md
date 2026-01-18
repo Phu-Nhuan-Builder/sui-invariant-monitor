@@ -1,112 +1,95 @@
-# Sui Invariant Monitor - Backend
+# Sui Invariant Monitor - Backend 🦀
 
-Rust backend service for the Sui Invariant Monitor. Provides REST API for analyzing smart contracts and monitoring protocol invariants.
+Rust backend server for the Sui Invariant Monitor. Provides REST API for AI-powered contract analysis and real-time invariant monitoring.
+
+## 🌐 Production
+
+- **API Base URL**: https://combo-ripe-nat-occur.trycloudflare.com
+- **Health Check**: https://combo-ripe-nat-occur.trycloudflare.com/health
+- **Status**: ✅ Running 24/7 on VPS with Supervisor
 
 ## 🏗️ Architecture
 
 ```
-backend/
-├── src/
-│   ├── main.rs                    # Entry point & service loop
-│   ├── config.rs                  # Environment configuration
-│   ├── error.rs                   # Error types
-│   │
-│   ├── api/                       # REST API layer
-│   │   ├── routes.rs             # Route definitions
-│   │   ├── handlers.rs           # Request handlers
-│   │   └── mod.rs
-│   │
-│   ├── analysis/                  # AI analysis module
-│   │   ├── metadata.rs           # Sui RPC metadata fetcher
-│   │   ├── llm.rs                # LLM client (OpenRouter/Ollama)
-│   │   └── mod.rs
-│   │
-│   ├── invariants/                # Invariant system
-│   │   ├── engine.rs             # Evaluation engine
-│   │   ├── types.rs              # Core types
-│   │   ├── definitions/          # Invariant implementations
-│   │   └── mod.rs
-│   │
-│   ├── sui_client/                # Sui blockchain integration
-│   │   ├── fetcher.rs            # Direct RPC calls
-│   │   └── mod.rs
-│   │
-│   ├── aggregator/                # State aggregation
-│   │   ├── state.rs              # Protocol state builder
-│   │   └── mod.rs
-│   │
-│   └── alerting/                  # Alert system
-│       ├── discord.rs            # Discord webhooks
-│       ├── webhook.rs            # Generic webhooks
-│       └── mod.rs
-│
-├── Cargo.toml
-├── .env.example
-└── Dockerfile
+Cloudflare Tunnel (HTTPS)
+        ↓
+   VPS Backend
+   Port: 7681
+        ↓
+   Supervisor
+   (Auto-restart)
+        ↓
+Sui RPC (Mainnet/Testnet)
 ```
 
-## 🚀 Getting Started
+## ✨ Features
+
+- **AI Analysis**: OpenRouter & Ollama integration for Move module analysis
+- **Dynamic Network**: Mainnet/Testnet switching via API parameter
+- **Real-time Monitoring**: 10-second polling of protocol state
+- **CORS Enabled**: Cross-origin requests from frontend
+- **Health Checks**: `/health` endpoint for monitoring
+- **Discord Webhooks**: Violation notifications
+
+## 🚀 Quick Start
 
 ### Prerequisites
 
-- **Rust** 1.75 or later
-- **Sui RPC endpoint** (Mainnet or Testnet)
-- (Optional) **Ollama** for local AI models
+- Rust 1.83+
+- OpenSSL development libraries
 
 ### Installation
 
 ```bash
-# Clone the repository
-git clone <repository-url>
-cd backend
+# Clone repository
+git clone https://github.com/phunhuanbuilder/sui-invariant-monitor.git
+cd sui-invariant-monitor/backend
 
-# Copy environment template
+# Create .env file
 cp .env.example .env
 
-# Edit .env file
+# Edit .env with your configuration
 nano .env
+
+# Build and run
+cargo run
 ```
 
-### Environment Configuration
+Server starts on `http://localhost:8080`
+
+### Environment Variables
 
 ```env
-# Sui Network
+# Sui RPC URL (fallback, API accepts network parameter)
 SUI_RPC_URL=https://fullnode.mainnet.sui.io:443
 
-# Server Configuration
+# Server port
 PORT=8080
+
+# Logging level (trace, debug, info, warn, error)
+RUST_LOG=info
+
+# Polling interval for monitoring (seconds)
 POLLING_INTERVAL_SECS=10
 
-# Monitoring (optional)
+# Discord webhook for violation alerts
+DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/YOUR_WEBHOOK_URL
+
+# Optional: Monitored object IDs (comma-separated)
 MONITORED_OBJECT_IDS=
 
-# Alerting (optional)
+# Optional: Generic webhook URL
 WEBHOOK_URL=
-DISCORD_WEBHOOK_URL=
 ```
-
-### Running the Server
-
-```bash
-# Development
-cargo run
-
-# Production build
-cargo build --release
-./target/release/sui-invariant-monitor
-
-# With auto-reload
-cargo watch -x run
-```
-
-The server will start on `http://localhost:8080`
 
 ## 📡 API Reference
 
 ### Health & Status
 
-#### GET /health
-Health check endpoint
+#### GET `/health`
+Health check endpoint.
+
+**Response:**
 ```json
 {
   "status": "ok",
@@ -114,246 +97,321 @@ Health check endpoint
 }
 ```
 
-#### GET /api/status
-Get monitoring status
+#### GET `/api/status`
+Get current monitoring status.
+
+**Response:**
 ```json
 {
-  "last_check": "2026-01-18T00:00:00Z",
+  "last_check": "2026-01-18T06:45:12Z",
   "violations": 0,
   "total_invariants": 5,
   "all_ok": true,
-  "monitored_objects": ["0x..."]
+  "monitored_objects": []
 }
 ```
 
-### Invariants
+### Contract Analysis
 
-#### GET /api/invariants
-List all monitored invariants
-```json
-[
-  {
-    "id": "INV-001",
-    "name": "Balance Conservation",
-    "description": "...",
-    "status": "Ok",
-    "evaluated_at": "2026-01-18T00:00:00Z",
-    "computation": {...},
-    "violation_reason": null
-  }
-]
-```
+#### POST `/api/analyze`
+Analyze a Sui package using AI.
 
-#### GET /api/invariants/:id
-Get specific invariant details
-
-#### POST /api/invariants/add
-Add suggested invariants to monitoring
-```json
-{
-  "invariants": [...],
-  "package_id": "0x2",
-  "module_name": "sui"
-}
-```
-
-#### POST /api/invariants/remove
-Remove invariant from monitoring
-```json
-{
-  "invariant_id": "INV-001"
-}
-```
-
-### AI Analysis
-
-#### POST /api/analyze
-Analyze a package with AI
+**Request:**
 ```json
 {
   "package_id": "0x2",
   "module_name": "coin",
-  "llm_provider": "ollama",
-  "model": "llama3.2",
-  "ollama_url": "http://localhost:11434"
+  "llm_provider": "openrouter",
+  "api_key": "sk-or-...",
+  "model": "anthropic/claude-opus-4.5",
+  "network": "mainnet"
 }
 ```
 
-Response:
+**Response:**
 ```json
 {
   "success": true,
-  "message": "Analyzed 1 module(s), found 5 invariants",
+  "message": "Analysis complete",
   "modules": [...],
   "analysis_results": [
     {
-      "package_id": "0x2",
       "module_name": "coin",
-      "suggested_invariants": [...],
-      "analysis_notes": "..."
+      "suggested_invariants": [
+        {
+          "id": "coin_total_supply",
+          "name": "Total Supply Conservation",
+          "description": "...",
+          "severity": "critical",
+          "formula": "..."
+        }
+      ]
     }
   ]
 }
 ```
 
-#### GET /api/metadata/:package_id/:module_name
-Get module metadata without AI analysis
+#### GET `/api/metadata/:package_id/:module_name`
+Get metadata for a specific module.
+
+**Query Parameters:**
+- `network` (optional): "mainnet" or "testnet"
+
+**Response:**
+```json
+{
+  "package_id": "0x2",
+  "module_name": "coin",
+  "structs": [...],
+  "functions": [...]
+}
+```
+
+### Invariant Management
+
+#### GET `/api/invariants`
+List all monitored invariants.
+
+**Response:**
+```json
+[
+  {
+    "id": "total_supply",
+    "name": "Total Supply Conservation",
+    "description": "...",
+    "status": "Ok",
+    "last_check": "2026-01-18T06:45:12Z",
+    "computation": {...}
+  }
+]
+```
+
+#### GET `/api/invariants/:id`
+Get specific invariant details.
+
+#### POST `/api/invariants/add`
+Add suggested invariants to monitoring.
+
+**Request:**
+```json
+{
+  "invariants": [
+    {
+      "id": "coin_total_supply",
+      "name": "Total Supply Conservation",
+      "description": "...",
+      "severity": "critical",
+      "formula": "...",
+      "package_id": "0x2",
+      "module_name": "coin"
+    }
+  ]
+}
+```
+
+#### POST `/api/invariants/remove`
+Remove invariant from monitoring.
+
+**Request:**
+```json
+{
+  "id": "total_supply"
+}
+```
 
 ### Object Monitoring
 
-#### POST /api/monitor
-Add object ID to dynamic monitoring
+#### POST `/api/monitor`
+Add object ID to monitoring.
+
+**Request:**
 ```json
 {
-  "object_id": "0x..."
-}
-```
-
-## 🧩 Key Components
-
-### Metadata Fetcher
-Fetches Move module metadata from Sui RPC:
-- Struct definitions
-- Function signatures
-- Abilities
-- Field types
-
-### LLM Clients
-Two implementations:
-- `OpenRouterClient`: Cloud AI (Claude, GPT-4, Gemini)
-- `OllamaClient`: Local AI (Llama, Mistral, CodeLlama)
-
-Both implement the `LlmClient` trait:
-```rust
-#[async_trait]
-pub trait LlmClient: Send + Sync {
-    async fn analyze_module(&self, metadata: &ModuleMetadata) -> Result<AnalysisResult>;
-}
-```
-
-### Invariant Engine
-- Starts with 0 invariants (no hard-coded defaults)
-- Invariants added via API
-- Evaluates all invariants every polling cycle
-- Tracks violations and errors
-
-### State Aggregator
-Normalizes Sui object data into protocol state:
-```rust
-pub struct ProtocolState {
-    pub total_supply: u64,
-    pub total_borrowed: u64,
-    pub total_reserves: u64,
-    pub collateral_value: u64,
-    pub on_chain_balance: u64,
+  "object_id": "0x123...",
+  "network": "mainnet"
 }
 ```
 
 ## 🔧 Development
 
-### Running Tests
-```bash
-cargo test
-cargo test -- --nocapture  # With output
-```
-
-### Code Quality
-```bash
-cargo fmt              # Format code
-cargo clippy           # Lint
-cargo check            # Quick compile check
-```
-
-### Building for Production
-```bash
-cargo build --release
-strip target/release/sui-invariant-monitor  # Reduce binary size
-```
-
-## 🐳 Docker
-
 ### Build
+
 ```bash
-docker build -t sui-invariant-monitor .
+# Debug build
+cargo build
+
+# Release build (optimized)
+cargo build --release
 ```
 
 ### Run
+
 ```bash
+# Development mode (with logging)
+RUST_LOG=debug cargo run
+
+# Watch mode (auto-reload)
+cargo watch -x run
+```
+
+### Test
+
+```bash
+# Run all tests
+cargo test
+
+# Run specific test
+cargo test test_name
+
+# Run with output
+cargo test -- --nocapture
+```
+
+### Lint & Format
+
+```bash
+# Format code
+cargo fmt
+
+# Check formatting
+cargo fmt -- --check
+
+# Lint
+cargo clippy
+
+# Fix lints
+cargo clippy --fix
+```
+
+## 📦 Deployment
+
+### VPS Deployment (Production)
+
+See [`DEPLOY_STEPS.md`](../DEPLOY_STEPS.md) for detailed VPS deployment guide.
+
+**Quick steps:**
+1. SSH into VPS
+2. Install Rust 1.83+
+3. Clone repository
+4. Create `.env` file
+5. Build release: `cargo build --release`
+6. Setup Supervisor service
+7. Setup Cloudflare Tunnel for HTTPS
+
+### Docker Deployment
+
+```bash
+# Build image
+docker build -t sui-monitor-backend .
+
+# Run container
 docker run -p 8080:8080 \
   -e SUI_RPC_URL=https://fullnode.mainnet.sui.io:443 \
-  sui-invariant-monitor
+  -e PORT=8080 \
+  sui-monitor-backend
 ```
 
-## ⚙️ Configuration
+### Render.com Deployment
 
-### Logging
-Set `RUST_LOG` environment variable:
+See [`RENDER_DEPLOYMENT.md`](../RENDER_DEPLOYMENT.md) for Render deployment guide.
+
+## 🛠️ Tech Stack
+
+- **Language**: Rust 1.83
+- **Web Framework**: Axum 0.7
+- **HTTP Client**: Reqwest 0.12 (HTTP/1.1 for OpenRouter)
+- **Serialization**: Serde
+- **Async Runtime**: Tokio
+- **CORS**: Tower-HTTP
+- **Logging**: Tracing
+
+## 📁 Project Structure
+
+```
+backend/
+├── src/
+│   ├── main.rs              # Entry point
+│   ├── config.rs            # Configuration
+│   ├── error.rs             # Error types
+│   ├── network.rs           # Network resolver
+│   ├── api/
+│   │   ├── mod.rs           # API module
+│   │   ├── routes.rs        # Route definitions
+│   │   └── handlers.rs      # Request handlers
+│   ├── analysis/
+│   │   ├── mod.rs
+│   │   ├── llm.rs           # LLM clients (OpenRouter/Ollama)
+│   │   └── metadata.rs      # Sui metadata fetching
+│   ├── invariants/
+│   │   ├── mod.rs
+│   │   ├── engine.rs        # Invariant evaluation engine
+│   │   ├── types.rs         # Invariant types
+│   │   └── definitions/     # Invariant implementations
+│   ├── sui_client/
+│   │   └── mod.rs           # Sui RPC client
+│   ├── aggregator/
+│   │   ├── mod.rs
+│   │   └── state.rs         # State aggregation
+│   └── alerting/
+│       ├── mod.rs
+│       ├── discord.rs       # Discord webhooks
+│       └── webhook.rs       # Generic webhooks
+├── Cargo.toml               # Dependencies
+├── Dockerfile               # Docker build
+└── .env.example             # Environment template
+```
+
+## 🔒 Security
+
+- **HTTPS**: Production uses Cloudflare Tunnel
+- **CORS**: Configured to allow frontend origin
+- **Environment Variables**: Secrets in `.env`, not committed
+- **Input Validation**: Package IDs and module names validated
+- **Timeouts**: 120s timeout for LLM requests
+
+## 📊 Monitoring
+
+### Logs (VPS)
+
 ```bash
-RUST_LOG=sui_invariant_monitor=debug cargo run
-RUST_LOG=info,sui_invariant_monitor=trace cargo run
+# SSH into VPS
+ssh -p 1443 root@n2.ckey.vn
+
+# View logs
+supervisorctl tail -f sui-monitor
+
+# Or direct file
+tail -f /var/log/sui-monitor.log
 ```
 
-### Polling Interval
-Adjust `POLLING_INTERVAL_SECS` in `.env`:
-```env
-POLLING_INTERVAL_SECS=10  # Check every 10 seconds
+### Supervisor Commands
+
+```bash
+# Status
+supervisorctl status
+
+# Restart
+supervisorctl restart sui-monitor
+
+# Stop
+supervisorctl stop sui-monitor
+
+# Start
+supervisorctl start sui-monitor
 ```
 
-### Custom RPC Endpoint
-```env
-# Mainnet
-SUI_RPC_URL=https://fullnode.mainnet.sui.io:443
+## 🤝 Contributing
 
-# Testnet
-SUI_RPC_URL=https://fullnode.testnet.sui.io:443
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Run tests: `cargo test`
+5. Format code: `cargo fmt`
+6. Submit a pull request
 
-# Local
-SUI_RPC_URL=http://localhost:9000
-```
+## 📄 License
 
-## 📊 Monitoring & Alerts
-
-### Webhook Alerts
-Configure generic webhook:
-```env
-WEBHOOK_URL=https://your-webhook-endpoint.com/alerts
-```
-
-### Discord Alerts
-Configure Discord webhook:
-```env
-DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
-```
-
-Alerts are sent when invariants are violated.
-
-## 🔍 Troubleshooting
-
-### "Failed to fetch module metadata"
-- Check `SUI_RPC_URL` is correct
-- Verify package ID and module name exist on-chain
-- Test RPC endpoint: `curl $SUI_RPC_URL`
-
-### "OpenRouter error 404"
-- Ensure `HTTP-Referer` and `X-Title` headers are set (already configured)
-- Verify API key is valid
-- Check model name format: `anthropic/claude-3.5-sonnet`
-
-### "No invariants to display"
-- Invariants must be added via `/api/invariants/add` endpoint
-- No hard-coded invariants by default
-- Use AI analysis to generate suggestions first
-
-## 📚 Dependencies
-
-Key crates:
-- `axum` - Web framework
-- `tokio` - Async runtime
-- `serde` - Serialization
-- `reqwest` - HTTP client
-- `tracing` - Logging
-- `chrono` - Date/time
-- `anyhow` - Error handling
+MIT License - see LICENSE file for details
 
 ## 👨‍💻 Author
 
@@ -363,4 +421,4 @@ Key crates:
 
 ---
 
-© 2026 Phú Nhuận Builder. Built for First Movers Sprint 2026
+© 2026 Phú Nhuận Builder
