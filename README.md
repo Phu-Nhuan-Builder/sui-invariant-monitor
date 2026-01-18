@@ -23,35 +23,35 @@ Sui Invariant Monitor is a comprehensive tool that combines AI analysis with rea
 
 ## 💡 Why This Project Matters
 
-### 1. Mục đích chính của dự án là gì?
+### 1. What is the main purpose of this project?
 
-**Sui Invariant Monitor giải quyết vấn đề an toàn smart contract trên Sui blockchain.**
+**Sui Invariant Monitor solves the smart contract safety problem on Sui blockchain.**
 
-Trong DeFi và các ứng dụng blockchain, smart contracts quản lý hàng tỷ đô la tài sản. Một lỗi nhỏ trong code có thể dẫn đến:
-- **Mất tiền**: Exploits, hacks, drains (ví dụ: $600M Poly Network hack)
-- **Protocol failure**: Invariants bị vi phạm, hệ thống sụp đổ
-- **Mất niềm tin**: Users rời bỏ protocol
+In DeFi and blockchain applications, smart contracts manage billions of dollars in assets. A small bug in code can lead to:
+- **Financial Loss**: Exploits, hacks, drains (e.g., $600M Poly Network hack)
+- **Protocol Failure**: Invariants violated, system collapse
+- **Loss of Trust**: Users abandon the protocol
 
-**Giải pháp của chúng tôi:**
-1. **AI Analysis**: Tự động phân tích Move modules, tìm ra các invariants quan trọng (ví dụ: "Total Supply = Sum of Balances")
-2. **Real-time Monitoring**: Liên tục kiểm tra invariants mỗi 10 giây, phát hiện vi phạm ngay lập tức
-3. **Early Warning**: Thông báo Discord khi có vấn đề, cho phép team phản ứng nhanh
+**Our Solution:**
+1. **AI Analysis**: Automatically analyze Move modules, identify critical invariants (e.g., "Total Supply = Sum of Balances")
+2. **Real-time Monitoring**: Continuously check invariants every 10 seconds, detect violations immediately
+3. **Early Warning**: Discord notifications when issues arise, allowing teams to react quickly
 
-**Kết quả**: Giảm thiểu rủi ro, tăng độ tin cậy của protocols trên Sui.
+**Result**: Minimize risk, increase reliability of protocols on Sui.
 
-### 2. Logic on-chain chính của dự án là gì?
+### 2. What is the main on-chain logic of this project?
 
-**Dự án này KHÔNG deploy smart contracts lên chain.** Thay vào đó, nó **đọc và phân tích** on-chain data:
+**This project does NOT deploy smart contracts on-chain.** Instead, it **reads and analyzes** on-chain data:
 
 **On-chain Interactions:**
 
 1. **Metadata Fetching** (via Sui RPC):
    ```
-   GET /sui_getObject -> Lấy object state
-   GET /sui_getNormalizedMoveModule -> Lấy module metadata
+   GET /sui_getObject -> Fetch object state
+   GET /sui_getNormalizedMoveModule -> Fetch module metadata
    ```
-   - Đọc struct definitions, function signatures
-   - Không modify state, chỉ read-only
+   - Read struct definitions, function signatures
+   - No state modification, read-only
 
 2. **State Aggregation**:
    ```
@@ -69,47 +69,47 @@ Trong DeFi và các ứng dụng blockchain, smart contracts quản lý hàng t�
    - If violated -> Send Discord webhook
    ```
 
-**Tại sao không on-chain?**
-- **Cost**: On-chain monitoring tốn gas fees liên tục
-- **Flexibility**: Off-chain có thể dùng AI, complex logic
-- **Speed**: Không bị giới hạn bởi block time
+**Why not on-chain?**
+- **Cost**: On-chain monitoring requires continuous gas fees
+- **Flexibility**: Off-chain can use AI and complex logic
+- **Speed**: Not limited by block time
 
-**Trade-off**: Phụ thuộc vào RPC node availability, nhưng đổi lại được flexibility và cost-effectiveness.
+**Trade-off**: Depends on RPC node availability, but gains flexibility and cost-effectiveness.
 
-### 3. Nếu bỏ blockchain ra khỏi dự án thì sản phẩm còn ý nghĩa không?
+### 3. Would this product be meaningful without blockchain?
 
-**KHÔNG.** Dự án này **hoàn toàn phụ thuộc** vào blockchain. Đây là lý do:
+**NO.** This project is **completely dependent** on blockchain. Here's why:
 
 **Blockchain-Specific Features:**
 
 1. **Move Language Analysis**:
-   - AI phân tích Move modules (Sui's programming language)
-   - Không áp dụng cho traditional databases hay APIs
-   - Move có đặc điểm riêng: object-centric, linear types
+   - AI analyzes Move modules (Sui's programming language)
+   - Not applicable to traditional databases or APIs
+   - Move has unique characteristics: object-centric, linear types
 
 2. **On-chain State Reading**:
-   - Đọc object state từ Sui blockchain
-   - Không có blockchain = không có data để monitor
-   - Traditional databases không có "invariants" concept như DeFi
+   - Read object state from Sui blockchain
+   - No blockchain = no data to monitor
+   - Traditional databases don't have DeFi "invariants" concept
 
 3. **DeFi-Specific Invariants**:
    - Total Supply Conservation
    - Collateralization Ratios
    - Liquidity Constraints
-   - Các invariants này chỉ tồn tại trong DeFi protocols
+   - These invariants only exist in DeFi protocols
 
 4. **Immutable Audit Trail**:
-   - Blockchain cung cấp transparent, immutable history
-   - Có thể verify violations on-chain
-   - Traditional systems có thể bị tamper
+   - Blockchain provides transparent, immutable history
+   - Can verify violations on-chain
+   - Traditional systems can be tampered with
 
-**Nếu bỏ blockchain:**
-- ❌ Không có Move code để analyze
-- ❌ Không có on-chain state để monitor
-- ❌ Không có DeFi invariants để check
-- ❌ Mất tính transparent và trustless
+**Without blockchain:**
+- ❌ No Move code to analyze
+- ❌ No on-chain state to monitor
+- ❌ No DeFi invariants to check
+- ❌ Loss of transparency and trustlessness
 
-**Kết luận**: Sui Invariant Monitor là một **blockchain-native tool**, được thiết kế đặc biệt cho Sui ecosystem. Nó không thể tồn tại độc lập khỏi blockchain.
+**Conclusion**: Sui Invariant Monitor is a **blockchain-native tool**, specifically designed for the Sui ecosystem. It cannot exist independently from blockchain.
 
 ---
 
