@@ -192,7 +192,7 @@ Trong DeFi và các ứng dụng blockchain, smart contracts quản lý hàng t�
 
 ### Live Demo (No Setup Required)
 
-Visit https://sui-invariant-monitor.vercel.app and start analyzing contracts immediately!
+Visit https://sui-invariant-monitor.phunhuanbuilder.com or https://invariant-monitor-on-sui.vercel.app and start analyzing contracts immediately!
 
 ### Local Development
 
