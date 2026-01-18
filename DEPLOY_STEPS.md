@@ -56,12 +56,21 @@ nano .env
 
 **Paste nội dung này:**
 ```env
+# RPC URL for monitoring service (background evaluation)
+# Note: AI analysis will use network selected from frontend (mainnet/testnet)
+# This is only fallback for monitoring service
 SUI_RPC_URL=https://fullnode.mainnet.sui.io:443
+
 PORT=8080
 RUST_LOG=info
 POLLING_INTERVAL_SECS=10
 DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/1462214251841192099/Na5kWHbCHDQrA3-mZ8BtSw6WoXV2c4ayagK-LNxBvd4KqU_2N9jCbNAxjEy6zYnf_9JR
 ```
+
+> **📝 Lưu ý về Network Switching:**
+> - **AI Analysis**: Frontend tự động pass network (mainnet/testnet) → backend sẽ dùng đúng RPC URL
+> - **Monitoring Service**: Dùng `SUI_RPC_URL` từ .env (nếu bạn add invariants để monitor)
+> - Không cần config 2 RPC URLs, network switching hoạt động tự động!
 
 **Save**: Ctrl+O → Enter → Ctrl+X
 
@@ -114,6 +123,8 @@ redirect_stderr=true
 stdout_logfile=/var/log/sui-monitor.log
 stdout_logfile_maxbytes=10MB
 stdout_logfile_backups=3
+# Note: SUI_RPC_URL is fallback for monitoring service
+# AI analysis uses network from frontend (mainnet/testnet dynamic switching)
 environment=PATH="/root/.cargo/bin:/usr/local/bin:/usr/bin:/bin",RUST_LOG="info",SUI_RPC_URL="https://fullnode.mainnet.sui.io:443",PORT="8080",POLLING_INTERVAL_SECS="10",DISCORD_WEBHOOK_URL="https://discord.com/api/webhooks/1462214251841192099/Na5kWHbCHDQrA3-mZ8BtSw6WoXV2c4ayagK-LNxBvd4KqU_2N9jCbNAxjEy6zYnf_9JR"
 ```
 
