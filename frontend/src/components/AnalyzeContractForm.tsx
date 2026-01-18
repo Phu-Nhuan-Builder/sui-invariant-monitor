@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
-import { analyzePackage, LlmProvider, AnalyzeResponse, SuggestedInvariant } from '../api/client';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { analyzePackage, addSuggestedInvariants, LlmProvider, AnalyzeResponse, SuggestedInvariant } from '../api/client';
 import { useNetwork } from '../context/NetworkContext';
 
 const OPENROUTER_MODELS = [
@@ -258,9 +258,23 @@ export function AnalyzeContractForm({ onAnalysisComplete }: Props) {
                                 <p className="analysis-notes">{ar.analysis_notes}</p>
                             )}
 
+                            {/* Add All Button */}
+                            {ar.suggested_invariants.length > 0 && (
+                                <ModuleAddAllButton
+                                    invariants={ar.suggested_invariants}
+                                    packageId={ar.package_id}
+                                    moduleName={ar.module_name}
+                                />
+                            )}
+
                             <div className="invariant-suggestions">
                                 {ar.suggested_invariants.map((inv) => (
-                                    <SuggestedInvariantCard key={inv.id} invariant={inv} />
+                                    <SuggestedInvariantCard
+                                        key={inv.id}
+                                        invariant={inv}
+                                        packageId={ar.package_id}
+                                        moduleName={ar.module_name}
+                                    />
                                 ))}
                             </div>
                         </div>
@@ -278,7 +292,72 @@ export function AnalyzeContractForm({ onAnalysisComplete }: Props) {
     );
 }
 
-function SuggestedInvariantCard({ invariant }: { invariant: SuggestedInvariant }) {
+function ModuleAddAllButton({
+    invariants,
+    packageId,
+    moduleName
+}: {
+    invariants: SuggestedInvariant[];
+    packageId: string;
+    moduleName: string;
+}) {
+    const queryClient = useQueryClient();
+    const [allAdded, setAllAdded] = useState(false);
+
+    const addAllMutation = useMutation({
+        mutationFn: () => addSuggestedInvariants({
+            invariants,
+            package_id: packageId,
+            module_name: moduleName,
+        }),
+        onSuccess: () => {
+            setAllAdded(true);
+            queryClient.invalidateQueries({ queryKey: ['invariants'] });
+            queryClient.invalidateQueries({ queryKey: ['status'] });
+        },
+    });
+
+    return (
+        <button
+            className={`btn ${allAdded ? 'btn-secondary' : 'btn-primary'}`}
+            onClick={() => addAllMutation.mutate()}
+            disabled={addAllMutation.isPending || allAdded}
+            style={{ marginBottom: '16px', fontSize: '13px', padding: '10px 16px' }}
+        >
+            {allAdded
+                ? `✓ All ${invariants.length} Invariants Added`
+                : addAllMutation.isPending
+                    ? 'Adding All...'
+                    : `+ Add All ${invariants.length} to Monitoring`}
+        </button>
+    );
+}
+
+function SuggestedInvariantCard({
+    invariant,
+    packageId,
+    moduleName
+}: {
+    invariant: SuggestedInvariant;
+    packageId: string;
+    moduleName: string;
+}) {
+    const queryClient = useQueryClient();
+    const [isAdded, setIsAdded] = useState(false);
+
+    const addMutation = useMutation({
+        mutationFn: () => addSuggestedInvariants({
+            invariants: [invariant],
+            package_id: packageId,
+            module_name: moduleName,
+        }),
+        onSuccess: () => {
+            setIsAdded(true);
+            queryClient.invalidateQueries({ queryKey: ['invariants'] });
+            queryClient.invalidateQueries({ queryKey: ['status'] });
+        },
+    });
+
     const severityColors: Record<string, string> = {
         critical: '#ef4444',
         high: '#f59e0b',
@@ -303,6 +382,16 @@ function SuggestedInvariantCard({ invariant }: { invariant: SuggestedInvariant }
             <div className="suggested-invariant__fields">
                 Fields: {invariant.fields_used.join(', ')}
             </div>
+
+            <button
+                className={`btn ${isAdded ? 'btn-secondary' : 'btn-primary'}`}
+                onClick={() => addMutation.mutate()}
+                disabled={addMutation.isPending || isAdded}
+                style={{ marginTop: '12px', width: '100%', fontSize: '12px', padding: '8px' }}
+            >
+                {isAdded ? '✓ Added to Monitoring' : addMutation.isPending ? 'Adding...' : '+ Add to Monitoring'}
+            </button>
         </div>
     );
 }
+

@@ -933,6 +933,36 @@ a:hover {
     margin-top: var(--space-sm);
 }
 
+/* ===== Footer ===== */
+.footer {
+    background: var(--white);
+    border-top: 1px solid var(--gray);
+    padding: var(--space-xl);
+    margin-top: auto;
+}
+
+.footer-content {
+    max-width: 1120px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-lg);
+}
+
+.footer-logo {
+    height: 48px;
+    width: auto;
+    object-fit: contain;
+}
+
+.footer-text {
+    font-size: 12px;
+    color: var(--text-secondary);
+    letter-spacing: 0.02em;
+}
+
 /* ===== Responsive ===== */
 @media (max-width: 768px) {
     .header-content {

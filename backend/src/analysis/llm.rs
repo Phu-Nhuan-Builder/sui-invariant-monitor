@@ -68,7 +68,10 @@ pub struct OpenRouterClient {
 impl OpenRouterClient {
     pub fn new(api_key: String, model: String) -> Self {
         Self {
-            client: reqwest::Client::new(),
+            client: reqwest::Client::builder()
+                .http1_only()  // Force HTTP/1.1 to avoid OpenRouter issues
+                .build()
+                .unwrap(),
             api_key,
             model,
         }
@@ -136,6 +139,8 @@ impl LlmClient for OpenRouterClient {
             .post("https://openrouter.ai/api/v1/chat/completions")
             .header("Authorization", format!("Bearer {}", self.api_key))
             .header("Content-Type", "application/json")
+            .header("HTTP-Referer", "http://localhost")  // Required by OpenRouter
+            .header("X-Title", "sui-invariant-monitor")  // Required by OpenRouter
             .json(&serde_json::json!({
                 "model": self.model,
                 "messages": [
@@ -151,22 +156,45 @@ impl LlmClient for OpenRouterClient {
             .await
             .map_err(|e| MonitorError::AlertError(format!("OpenRouter request failed: {}", e)))?;
 
-        let json: serde_json::Value = response
-            .json()
+        // Check status and get body for better error messages
+        let status = response.status();
+        let body = response
+            .text()
             .await
-            .map_err(|e| MonitorError::ParseError(format!("Failed to parse OpenRouter response: {}", e)))?;
+            .map_err(|e| MonitorError::ParseError(format!("Failed to read response body: {}", e)))?;
 
-        // Extract content from response
+        if !status.is_success() {
+            return Err(MonitorError::AlertError(format!(
+                "OpenRouter error {}: {}",
+                status,
+                body
+            )));
+        }
+
+        let json: serde_json::Value = serde_json::from_str(&body)
+            .map_err(|e| MonitorError::ParseError(format!("Failed to parse OpenRouter JSON: {}", e)))?;
+
+        // Extract content from response (handle both string and array formats)
         let content = json
             .get("choices")
             .and_then(|c| c.get(0))
             .and_then(|c| c.get("message"))
             .and_then(|m| m.get("content"))
-            .and_then(|c| c.as_str())
             .ok_or_else(|| MonitorError::ParseError("No content in OpenRouter response".to_string()))?;
 
+        let content_str = match content {
+            serde_json::Value::String(s) => s.clone(),
+            serde_json::Value::Array(arr) => {
+                arr.iter()
+                    .filter_map(|v| v.get("text").and_then(|t| t.as_str()))
+                    .collect::<Vec<_>>()
+                    .join("")
+            }
+            _ => return Err(MonitorError::ParseError("Invalid content format".to_string())),
+        };
+
         // Parse the JSON response from LLM
-        let analysis: serde_json::Value = serde_json::from_str(content)
+        let analysis: serde_json::Value = serde_json::from_str(&content_str)
             .map_err(|e| MonitorError::ParseError(format!("Failed to parse LLM JSON: {}", e)))?;
 
         let suggested_invariants: Vec<SuggestedInvariant> = analysis

@@ -42,6 +42,19 @@ export function Layout() {
             <main className="main">
                 <Outlet />
             </main>
+
+            <footer className="footer">
+                <div className="footer-content">
+                    <img
+                        src="/phunhuanbuilder-logo-zoom.png"
+                        alt="Phú Nhuận Builder"
+                        className="footer-logo"
+                    />
+                    <p className="footer-text">
+                        © 2026 Phú Nhuận Builder. Built for First Movers Sprint 2026
+                    </p>
+                </div>
+            </footer>
         </div>
     );
 }

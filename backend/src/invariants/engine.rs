@@ -11,7 +11,7 @@ pub struct InvariantEngine {
 impl InvariantEngine {
     pub fn new() -> Self {
         Self {
-            invariants: all_invariants(),
+            invariants: Vec::new(),  // Start with empty list, invariants added via API
             previous_state: None,
         }
     }

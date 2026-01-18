@@ -7,10 +7,10 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
-use crate::invariants::InvariantResult;
+use crate::invariants::{InvariantResult, InvariantStatus};
 use crate::analysis::{ModuleMetadata, LlmProvider, SuggestedInvariant, AnalysisResult};
 use crate::analysis::metadata::MetadataFetcher;
-use crate::analysis::llm::{LlmConfig, create_llm_client, LlmClient};
+use crate::analysis::llm::{LlmConfig, create_llm_client};
 use crate::MonitorState;
 
 #[derive(Serialize)]
@@ -61,6 +61,33 @@ pub struct AnalyzeResponse {
     pub message: String,
     pub modules: Vec<ModuleMetadata>,
     pub analysis_results: Vec<AnalysisResult>,
+}
+
+/// Request to add suggested invariants to monitoring
+#[derive(Deserialize)]
+pub struct AddInvariantsRequest {
+    pub invariants: Vec<SuggestedInvariant>,
+    pub package_id: String,
+    pub module_name: String,
+}
+
+#[derive(Serialize)]
+pub struct AddInvariantsResponse {
+    pub success: bool,
+    pub message: String,
+    pub added_count: usize,
+}
+
+/// Request to remove an invariant from monitoring
+#[derive(Deserialize)]
+pub struct RemoveInvariantRequest {
+    pub invariant_id: String,
+}
+
+#[derive(Serialize)]
+pub struct RemoveInvariantResponse {
+    pub success: bool,
+    pub message: String,
 }
 
 /// Health check endpoint
@@ -251,6 +278,73 @@ pub async fn analyze_package(
         modules,
         analysis_results,
     })
+}
+
+/// Add suggested invariants to monitoring
+pub async fn add_suggested_invariants(
+    State(state): State<Arc<RwLock<MonitorState>>>,
+    Json(request): Json<AddInvariantsRequest>,
+) -> Json<AddInvariantsResponse> {
+    let mut state = state.write().await;
+    
+    let mut added_count = 0;
+    let now = chrono::Utc::now();
+    
+    for suggested in request.invariants {
+        // Convert SuggestedInvariant to InvariantResult
+        let invariant_result = InvariantResult {
+            id: suggested.id.clone(),
+            name: suggested.name,
+            description: suggested.description,
+            status: InvariantStatus::Ok,  // Default to OK, will be evaluated
+            violation_reason: None,
+            evaluated_at: now,
+            computation: crate::invariants::InvariantComputation {
+                inputs: std::collections::HashMap::new(),
+                formula: suggested.formula,
+                result: "Pending evaluation".to_string(),
+            },
+        };
+        
+        // Check if already exists
+        if !state.results.iter().any(|r| r.id == suggested.id) {
+            state.results.push(invariant_result);
+            added_count += 1;
+        }
+    }
+    
+    // Trigger re-evaluation
+    state.pending_evaluation = true;
+    
+    Json(AddInvariantsResponse {
+        success: true,
+        message: format!("Added {} new invariant(s) to monitoring", added_count),
+        added_count,
+    })
+}
+
+/// Remove an invariant from monitoring
+pub async fn remove_invariant(
+    State(state): State<Arc<RwLock<MonitorState>>>,
+    Json(request): Json<RemoveInvariantRequest>,
+) -> Json<RemoveInvariantResponse> {
+    let mut state = state.write().await;
+    
+    let initial_count = state.results.len();
+    state.results.retain(|r| r.id != request.invariant_id);
+    let removed_count = initial_count - state.results.len();
+    
+    if removed_count > 0 {
+        Json(RemoveInvariantResponse {
+            success: true,
+            message: format!("Removed invariant {}", request.invariant_id),
+        })
+    } else {
+        Json(RemoveInvariantResponse {
+            success: false,
+            message: format!("Invariant {} not found", request.invariant_id),
+        })
+    }
 }
 
 /// Get module metadata (without LLM analysis)

@@ -129,3 +129,56 @@ export async function analyzePackage(request: AnalyzeRequest): Promise<AnalyzeRe
 export async function fetchModuleMetadata(packageId: string, moduleName: string): Promise<ModuleMetadata> {
     return fetchWithError<ModuleMetadata>(`${API_BASE}/api/metadata/${packageId}/${moduleName}`);
 }
+
+// ===== Add Suggested Invariants =====
+
+export interface AddInvariantsRequest {
+    invariants: SuggestedInvariant[];
+    package_id: string;
+    module_name: string;
+}
+
+export interface AddInvariantsResponse {
+    success: boolean;
+    message: string;
+    added_count: number;
+}
+
+export async function addSuggestedInvariants(request: AddInvariantsRequest): Promise<AddInvariantsResponse> {
+    const res = await fetch(`${API_BASE}/api/invariants/add`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(request),
+    });
+
+    if (!res.ok) {
+        throw new Error(`API error: ${res.status} ${res.statusText}`);
+    }
+
+    return res.json();
+}
+
+// ===== Remove Invariant =====
+
+export interface RemoveInvariantRequest {
+    invariant_id: string;
+}
+
+export interface RemoveInvariantResponse {
+    success: boolean;
+    message: string;
+}
+
+export async function removeInvariant(request: RemoveInvariantRequest): Promise<RemoveInvariantResponse> {
+    const res = await fetch(`${API_BASE}/api/invariants/remove`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(request),
+    });
+
+    if (!res.ok) {
+        throw new Error(`API error: ${res.status} ${res.statusText}`);
+    }
+
+    return res.json();
+}
