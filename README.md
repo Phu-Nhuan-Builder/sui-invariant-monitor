@@ -60,7 +60,7 @@ sui-invariant-monitor/
 ## 🚀 Quick Start
 
 ### Prerequisites
-- **Rust** 1.75+ (for backend)
+- **Rust** 1.82+ (for backend)
 - **Node.js** 18+ (for frontend)
 - **Ollama** (optional, for local AI models)
 
