@@ -1,4 +1,4 @@
-# 🚀 Deploy Backend lên VPS - Hướng dẫn Step-by-Step
+# 🚀 Deploy Backend lên VPS - Hướng dẫn Step-by-Step (Supervisor)
 
 ## 📋 Thông tin VPS của bạn
 - **SSH**: `ssh -p 1443 root@n2.ckey.vn`
@@ -85,47 +85,70 @@ Nếu thấy logs:
 
 → **Thành công!** Press Ctrl+C để stop.
 
-## ✅ Bước 8: Setup Systemd Service
+## ✅ Bước 8: Install Supervisor
 
 ```bash
-nano /etc/systemd/system/sui-monitor.service
+apt install -y supervisor
+```
+
+Verify supervisor installed:
+```bash
+supervisorctl version
+```
+
+## ✅ Bước 9: Create Supervisor Config
+
+```bash
+nano /etc/supervisor/conf.d/sui-monitor.conf
 ```
 
 **Paste:**
 ```ini
-[Unit]
-Description=Sui Invariant Monitor
-After=network.target
-
-[Service]
-Type=simple
-User=root
-WorkingDirectory=/root/sui-invariant-monitor/backend
-Environment="PATH=/root/.cargo/bin:/usr/local/bin:/usr/bin:/bin"
-EnvironmentFile=/root/sui-invariant-monitor/backend/.env
-ExecStart=/root/sui-invariant-monitor/backend/target/release/sui-invariant-monitor
-Restart=always
-RestartSec=10
-
-[Install]
-WantedBy=multi-user.target
+[program:sui-monitor]
+command=/root/sui-invariant-monitor/backend/target/release/sui-invariant-monitor
+directory=/root/sui-invariant-monitor/backend
+user=root
+autostart=true
+autorestart=true
+redirect_stderr=true
+stdout_logfile=/var/log/sui-monitor.log
+stdout_logfile_maxbytes=10MB
+stdout_logfile_backups=3
+environment=PATH="/root/.cargo/bin:/usr/local/bin:/usr/bin:/bin",RUST_LOG="info",SUI_RPC_URL="https://fullnode.mainnet.sui.io:443",PORT="8080",POLLING_INTERVAL_SECS="10",DISCORD_WEBHOOK_URL="https://discord.com/api/webhooks/1462214251841192099/Na5kWHbCHDQrA3-mZ8BtSw6WoXV2c4ayagK-LNxBvd4KqU_2N9jCbNAxjEy6zYnf_9JR"
 ```
 
 **Save**: Ctrl+O → Enter → Ctrl+X
 
-```bash
-# Enable và start service
-systemctl daemon-reload
-systemctl enable sui-monitor
-systemctl start sui-monitor
+## ✅ Bước 10: Start Service với Supervisor
 
-# Check status
-systemctl status sui-monitor
+```bash
+# Reload supervisor config
+supervisorctl reread
+supervisorctl update
+
+# Start service
+supervisorctl start sui-monitor
+
+# Check status (phải thấy RUNNING)
+supervisorctl status sui-monitor
 ```
 
-Phải thấy: **"active (running)"** màu xanh
+Expected output:
+```
+sui-monitor                      RUNNING   pid 12345, uptime 0:00:05
+```
 
-## ✅ Bước 9: Install Nginx
+## ✅ Bước 11: View Logs
+
+```bash
+# Xem logs real-time
+tail -f /var/log/sui-monitor.log
+
+# Hoặc dùng supervisor
+supervisorctl tail -f sui-monitor
+```
+
+## ✅ Bước 12: Install Nginx (Optional - for reverse proxy)
 
 ```bash
 apt install -y nginx
@@ -156,7 +179,7 @@ server {
 # Enable site
 ln -s /etc/nginx/sites-available/sui-monitor /etc/nginx/sites-enabled/
 nginx -t
-systemctl restart nginx
+systemctl restart nginx || service nginx restart
 
 # Allow firewall
 ufw allow 80
@@ -164,7 +187,7 @@ ufw allow 1443
 ufw enable
 ```
 
-## ✅ Bước 10: Test API
+## ✅ Bước 13: Test API
 
 Từ VPS:
 ```bash
@@ -185,24 +208,80 @@ Response:
 
 **Public URL**: `http://n2.ckey.vn`
 
-## 📊 Useful Commands
+## 📊 Supervisor Commands
 
 ```bash
+# Xem status
+supervisorctl status
+
+# Start service
+supervisorctl start sui-monitor
+
+# Stop service
+supervisorctl stop sui-monitor
+
+# Restart service
+supervisorctl restart sui-monitor
+
 # Xem logs
-journalctl -u sui-monitor -f
+supervisorctl tail sui-monitor
+supervisorctl tail -f sui-monitor  # Follow logs
 
-# Restart
-systemctl restart sui-monitor
+# Reload config sau khi sửa
+supervisorctl reread
+supervisorctl update
+```
 
-# Status
-systemctl status sui-monitor
+## 🔄 Update Code
 
-# Update code
+Khi có code mới:
+
+```bash
 cd ~/sui-invariant-monitor
 git pull
 cd backend
 cargo build --release
-systemctl restart sui-monitor
+supervisorctl restart sui-monitor
+
+# Check logs
+supervisorctl tail -f sui-monitor
+```
+
+## 🔧 Troubleshooting
+
+### Service không start:
+```bash
+# Check supervisor status
+supervisorctl status sui-monitor
+
+# Check logs
+tail -50 /var/log/sui-monitor.log
+
+# Manual test
+cd ~/sui-invariant-monitor/backend
+./target/release/sui-invariant-monitor
+```
+
+### Port 8080 đã được dùng:
+```bash
+# Find process
+lsof -i :8080
+
+# Stop via supervisor
+supervisorctl stop sui-monitor
+
+# Or kill process
+kill -9 PID
+```
+
+### Supervisor không nhận config:
+```bash
+# Reload config
+supervisorctl reread
+supervisorctl update
+
+# Restart supervisor service
+service supervisor restart
 ```
 
 ## 🔄 Update Frontend
@@ -219,4 +298,12 @@ vercel --prod
 
 ---
 
-✅ Done! Backend running 24/7 tại: **http://n2.ckey.vn**
+✅ Done! Backend running 24/7 với Supervisor tại: **http://n2.ckey.vn**
+
+## 💡 Ưu điểm Supervisor
+
+- ✅ **Auto-restart**: Tự động restart khi app crash
+- ✅ **Log management**: Tự động rotate logs
+- ✅ **Process monitoring**: Theo dõi process status
+- ✅ **Easy management**: Commands đơn giản và rõ ràng
+- ✅ **Resource control**: Giới hạn resources nếu cần
