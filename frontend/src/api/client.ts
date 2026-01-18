@@ -1,7 +1,7 @@
 import { InvariantResult, MonitorStatus, HealthResponse } from '../types/invariant';
 
 // Fallback to production URL if env var not set
-const API_BASE = import.meta.env.VITE_API_URL || 'https://sui-invariant-monitor.fly.dev';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://n2.ckey.vn:8080';
 
 async function fetchWithError<T>(url: string): Promise<T> {
     const res = await fetch(url);
