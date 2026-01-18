@@ -4,14 +4,15 @@ import { analyzePackage, addSuggestedInvariants, LlmProvider, AnalyzeResponse, S
 import { useNetwork } from '../context/NetworkContext';
 
 const OPENROUTER_MODELS = [
-    // Paid models
-    { value: 'anthropic/claude-3.5-sonnet', label: 'Claude 3.5 Sonnet (Paid)' },
-    { value: 'openai/gpt-4o', label: 'GPT-4o (Paid)' },
-    { value: 'google/gemini-pro-1.5', label: 'Gemini Pro 1.5 (Paid)' },
-    { value: 'meta-llama/llama-3.1-70b-instruct', label: 'Llama 3.1 70B (Paid)' },
-    // Free models
-    { value: 'google/gemini-flash-1.5', label: 'Gemini Flash 1.5 (Free)' },
-    { value: 'meta-llama/llama-3.2-11b-vision-instruct:free', label: 'Llama 3.2 11B Vision (Free)' },
+    // Frontier paid models
+    { value: 'openai/gpt-5.2', label: 'GPT-5.2 (Paid)' },
+    { value: 'anthropic/claude-opus-4.5', label: 'Claude Opus 4.5 (Paid)' },
+    { value: 'anthropic/claude-sonnet-4.5', label: 'Claude Sonnet 4.5 (Paid)' },
+    { value: 'deepseek/deepseek-v3.2', label: 'DeepSeek V3.2 (Paid)' },
+    { value: 'minimax/minimax-m2.1', label: 'MiniMax M2.1 (Paid)' },
+    { value: 'z-ai/glm-4.7', label: 'GLM-4.7 (Paid)' },
+    // Free model
+    { value: 'xiaomi/mimo-v2-flash:free', label: 'Mimo V2 Flash (Free)' },
 ];
 
 const SUGGESTED_OLLAMA_MODELS = [
