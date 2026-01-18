@@ -1,60 +1,81 @@
-# Sui Invariant Monitor
+# Sui Invariant Monitor 🛡️
 
-Protocol-level invariant & safety monitoring for Sui smart contracts.
+AI-powered smart contract safety monitoring tool for the Sui blockchain. Automatically analyze Move modules and monitor protocol invariants in real-time.
 
-> A runtime safety monitor that detects invariant violations even when transactions succeed.
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Sui](https://img.shields.io/badge/Sui-Blockchain-4da2ff.svg)
 
-## Overview
+## 🎯 Overview
 
-This tool provides continuous off-chain monitoring of Sui protocol state, recomputing critical invariants and alerting when violations are detected.
+Sui Invariant Monitor is a comprehensive tool that combines AI analysis with real-time monitoring to ensure smart contract safety on Sui blockchain. It features:
 
-### Key Features
+- **AI-Powered Analysis**: Uses LLMs (OpenRouter/Ollama) to analyze Move modules and suggest safety invariants
+- **Real-time Monitoring**: Continuously evaluates protocol state against defined invariants
+- **Modern UI**: Clean Swiss-style interface with Sui blue branding
+- **Network Switching**: Support for both Mainnet and Testnet
+- **Flexible Architecture**: Backend in Rust, frontend in React + TypeScript
 
-- **5 High-Impact Invariants** monitored continuously
-- **Discord/Webhook Alerts** on violations
-- **REST API** for integration and UI
-- **Developer-focused UI** for demos and inspection
+## ✨ Features
 
-## Architecture
+### AI Contract Analysis
+- Fetch metadata from any Sui package on-chain
+- Analyze Move modules using Claude, GPT-4, Gemini, or local Ollama models
+- Generate safety-critical invariants automatically
+- Suggest severity levels and formulas for each invariant
+
+### Invariant Monitoring
+- Add AI-suggested invariants to active monitoring
+- Real-time protocol state evaluation
+- Visual status indicators (OK/Violated/Error)
+- Remove unwanted invariants with one click
+
+### User Experience
+- **Bulk Actions**: Add all suggested invariants at once
+- **Manual Control**: Only monitor what you explicitly confirm
+- **Network Support**: Switch between Mainnet/Testnet seamlessly
+- **Responsive Design**: Clean, minimalist Swiss-style interface
+
+## 🏗️ Architecture
 
 ```
-┌─────────────────┐     ┌─────────────────┐
-│   Sui Network   │────▶│  Rust Backend   │
-└─────────────────┘     │  - State Fetch  │
-                        │  - Invariants   │
-                        │  - Alerting     │
-                        │  - REST API     │
-                        └────────┬────────┘
-                                 │
-                        ┌────────▼────────┐
-                        │ React Frontend  │
-                        │  - Overview     │
-                        │  - Details      │
-                        └─────────────────┘
+sui-invariant-monitor/
+├── backend/          # Rust + Axum API server
+│   ├── src/
+│   │   ├── api/           # REST endpoints
+│   │   ├── analysis/      # AI + metadata fetching
+│   │   ├── invariants/    # Invariant definitions & engine
+│   │   ├── sui_client/    # Sui RPC integration
+│   │   └── aggregator/    # State aggregation
+│   └── Cargo.toml
+│
+└── frontend/         # React + TypeScript + Vite
+    ├── src/
+    │   ├── components/    # UI components
+    │   ├── pages/         # Page layouts
+    │   ├── api/           # API client
+    │   └── context/       # React context (network)
+    └── package.json
 ```
 
-## Invariants Monitored
+## 🚀 Quick Start
 
-| ID | Name | Description |
-|----|------|-------------|
-| INV-001 | Total Supply Conservation | Supply = Reserves + Borrowed |
-| INV-002 | Collateralization Ratio | Borrows must be 150% collateralized |
-| INV-003 | Accounting Balance Integrity | Internal balance = On-chain balance |
-| INV-004 | Interest Index Monotonicity | Interest index never decreases |
-| INV-005 | Liquidity Constraint | Borrowed ≤ Supply |
+### Prerequisites
+- **Rust** 1.75+ (for backend)
+- **Node.js** 18+ (for frontend)
+- **Ollama** (optional, for local AI models)
 
-## Quick Start
-
-### Backend
+### Backend Setup
 
 ```bash
 cd backend
 cp .env.example .env
-# Edit .env with your Sui RPC URL and object IDs
+# Edit .env with your Sui RPC URL
 cargo run
 ```
 
-### Frontend
+Backend runs on `http://localhost:8080`
+
+### Frontend Setup
 
 ```bash
 cd frontend
@@ -62,42 +83,145 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:5173 to view the monitor.
+Frontend runs on `http://localhost:5173`
 
-## Deployment
+## 📖 Usage Guide
+
+### 1. Analyze a Contract
+
+1. Enter a Sui **Package ID** (e.g., `0x2`)
+2. (Optional) Specify a **Module Name**
+3. Configure LLM settings:
+   - **Ollama**: Local models (llama3.2, codellama, etc.)
+   - **OpenRouter**: Cloud models (Claude, GPT-4, Gemini)
+4. Click **Analyze Contract**
+
+### 2. Add Invariants to Monitoring
+
+After analysis:
+- Click **"+ Add All to Monitoring"** for bulk action
+- Or click **"+ Add to Monitoring"** on individual invariants
+
+### 3. Monitor Invariant Status
+
+- View real-time status in the **Invariant Status** grid
+- **Green badge**: Invariant is satisfied
+- **Red badge**: Invariant violated
+- Click **−** button to remove from monitoring
+
+## 🔧 Configuration
+
+### Backend Environment Variables
+
+```env
+SUI_RPC_URL=https://fullnode.mainnet.sui.io:443
+PORT=8080
+POLLING_INTERVAL_SECS=10
+```
+
+### LLM Providers
+
+**OpenRouter** (Cloud):
+- Models: Claude 3.5, GPT-4o, Gemini Pro, Llama 3.1
+- Requires API key from [openrouter.ai](https://openrouter.ai/keys)
+
+**Ollama** (Local):
+- Auto-detects installed models
+- Supports llama3.2, codellama, mistral, qwen2.5-coder
+- Run `ollama pull llama3.2` to install
+
+## 🎨 Design Philosophy
+
+**Minimalism & Swiss Style**
+- 60% White (primary)
+- 30% Sui Blue (#4da2ff)
+- 10% Black (tertiary)
+- Clean typography, geometric shapes, high contrast
+
+## 📡 API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/invariants` | List all monitored invariants |
+| GET | `/api/invariants/:id` | Get specific invariant details |
+| GET | `/api/status` | Get monitoring status |
+| POST | `/api/analyze` | Analyze package with AI |
+| POST | `/api/invariants/add` | Add invariants to monitoring |
+| POST | `/api/invariants/remove` | Remove invariant from monitoring |
+| POST | `/api/monitor` | Add object ID to monitor |
+
+## 🧪 Development
+
+### Backend Development
+
+```bash
+cd backend
+cargo watch -x run  # Auto-reload on changes
+cargo test          # Run tests
+cargo fmt           # Format code
+```
+
+### Frontend Development
+
+```bash
+cd frontend
+npm run dev         # Development server
+npm run typecheck   # TypeScript checks
+npm run build       # Production build
+```
+
+## 📦 Deployment
 
 ### Backend (Fly.io)
 
 ```bash
 cd backend
 fly deploy
-
-# Set secrets
-fly secrets set DISCORD_WEBHOOK_URL=your-webhook
-fly secrets set MONITORED_OBJECT_IDS=0x123,0x456
 ```
 
-### Frontend
-
-Build and deploy to any static host:
+### Frontend (Vercel/Netlify)
 
 ```bash
 cd frontend
-VITE_API_URL=https://your-backend.fly.dev npm run build
+npm run build
 # Deploy dist/ folder
 ```
 
-## Configuration
+## 🛠️ Tech Stack
 
-See [backend/README.md](backend/README.md) and [frontend/README.md](frontend/README.md) for detailed configuration.
+**Backend:**
+- Rust
+- Axum (Web framework)
+- Reqwest (HTTP client)
+- Serde (Serialization)
+- Tokio (Async runtime)
 
-## Why Web3-Native?
+**Frontend:**
+- React 18
+- TypeScript
+- Vite
+- React Query
+- React Router
 
-1. **On-chain state is the source of truth** - Fetches directly from Sui RPC
-2. **Successful txns can violate invariants** - Catches issues the VM doesn't
-3. **Cross-object invariants** - Monitors relationships Move can't express
-4. **Continuous surveillance** - Runs without on-chain triggers or gas costs
+## 🤝 Contributing
 
-## License
+This project was built for the **Sui First Movers Sprint 2026**. Contributions are welcome!
 
-MIT
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
+
+## 📄 License
+
+MIT License - see LICENSE file for details
+
+## 👨‍💻 Author
+
+**Phú Nhuận Builder**
+- Email: phunhuanbuilder@gmail.com
+- Built for: First Movers Sprint 2026
+
+---
+
+© 2026 Phú Nhuận Builder. Built for First Movers Sprint 2026
