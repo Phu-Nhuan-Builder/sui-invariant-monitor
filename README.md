@@ -389,12 +389,12 @@ MIT License - see LICENSE file for details
 
 **Phú Nhuận Builder**
 - Email: phunhuanbuilder@gmail.com
-- GitHub: [@phunhuanbuilder](https://github.com/phunhuanbuilder)
+- GitHub: [@phunhuanbuilder](https://github.com/Phu-Nhuan-Builder)
 - Built for: **First Movers Sprint 2026**
 
-## 🙏 Acknowledgments
+## 🙏 Acknowledgements
 
-- **Sui Foundation** for the First Movers Sprint
+- **First Movers Vietnam** for the First Movers Sprint
 - **Cloudflare** for free HTTPS tunneling
 - **Vercel** for frontend hosting
 - **OpenRouter** for AI model access
