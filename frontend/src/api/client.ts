@@ -64,6 +64,7 @@ export interface AnalyzeRequest {
     api_key?: string;
     model: string;
     ollama_url?: string;
+    network?: string;  // "mainnet" or "testnet"
 }
 
 export interface FieldMetadata {

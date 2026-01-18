@@ -52,6 +52,8 @@ pub struct AnalyzeRequest {
     pub api_key: Option<String>,      // For OpenRouter
     pub model: String,                // e.g., "anthropic/claude-3.5-sonnet" or "llama3.2"
     pub ollama_url: Option<String>,   // For Ollama, default: http://localhost:11434
+    #[serde(default)]
+    pub network: Option<String>,  // "mainnet" or "testnet"
 }
 
 /// Response from analysis
@@ -186,9 +188,13 @@ pub async fn analyze_package(
     State(state): State<Arc<RwLock<MonitorState>>>,
     Json(request): Json<AnalyzeRequest>,
 ) -> Json<AnalyzeResponse> {
-    let state_read = state.read().await;
-    let rpc_url = state_read.rpc_url.clone();
-    drop(state_read);
+    // Use network parameter to get RPC URL, fallback to state's RPC URL
+    let rpc_url = if request.network.is_some() {
+        crate::network::get_rpc_url(request.network.as_deref())
+    } else {
+        let state_read = state.read().await;
+        state_read.rpc_url.clone()
+    };
 
     let fetcher = MetadataFetcher::new(&rpc_url);
     

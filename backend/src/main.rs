@@ -6,6 +6,7 @@ mod invariants;
 mod alerting;
 mod api;
 mod analysis;
+mod network;
 
 use std::sync::Arc;
 use std::time::{Duration, Instant};

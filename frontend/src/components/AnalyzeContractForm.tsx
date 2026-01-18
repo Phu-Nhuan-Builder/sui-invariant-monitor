@@ -80,6 +80,7 @@ export function AnalyzeContractForm({ onAnalysisComplete }: Props) {
             api_key: provider === 'openrouter' ? apiKey : undefined,
             model,
             ollama_url: provider === 'ollama' ? ollamaUrl : undefined,
+            network: network,  // Pass selected network from context
         });
     };
 
